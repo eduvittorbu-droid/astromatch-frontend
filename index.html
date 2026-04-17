@@ -45,22 +45,20 @@
         const terms = document.getElementById('terms').checked;
         if (!terms) return alert('Aceite os termos');
         try {
-            // 1. Registrar (cria usuário inativo)
-            const res = await axios.post(`${API_URL}/auth/register`, {
+            // Registrar (agora com o prefixo /api)
+            const res = await axios.post(`${API_URL}/api/auth/register`, {
                 cpf, email, password,
                 termsAccepted: true, disclaimerAccepted: true, privacyAccepted: true,
                 faceDescriptor: [0,0,0]
             });
             const userId = res.data.userId;
-            // 2. Ativar assinatura (CPF de teste isento)
-            const paymentRes = await axios.post(`${API_URL}/payment/create-checkout`, { userId, cpf, email, name });
-            // 3. Redirecionar para a URL de pagamento (ou para /complete-profile se CPF teste)
+            // Criar checkout (pagamento) também com /api
+            const paymentRes = await axios.post(`${API_URL}/api/payment/create-checkout`, { userId, cpf, email, name });
             window.location.href = paymentRes.data.url;
         } catch (err) {
             document.getElementById('message').innerText = 'Erro: ' + (err.response?.data?.error || err.message);
         }
     });
-    // Carregar axios da CDN (se não tiver)
     if (!window.axios) {
         const script = document.createElement('script');
         script.src = 'https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js';
