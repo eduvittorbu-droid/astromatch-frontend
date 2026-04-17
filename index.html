@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>AstroMatch - Cadastro</title>
+    <style>
+        body { font-family: Arial; background: #0a0a2a; color: white; padding: 20px; }
+        .container { max-width: 500px; margin: auto; background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; }
+        input, select, button { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; }
+        button { background: #ffd700; color: #0a0a2a; font-weight: bold; cursor: pointer; }
+        .error { color: #ff8888; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>✨ AstroMatch ✨</h1>
+    <form id="registerForm">
+        <input type="text" id="cpf" placeholder="CPF" required>
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="password" id="password" placeholder="Senha" required>
+        <input type="text" id="name" placeholder="Nome completo" required>
+        <input type="date" id="birthDate" required>
+        <input type="time" id="birthTime" value="12:00">
+        <input type="text" id="birthCity" placeholder="Cidade" required>
+        <input type="text" id="birthState" placeholder="Estado (ex: SP)" required>
+        <input type="text" id="birthCountry" placeholder="País" value="Brasil" required>
+        <label><input type="checkbox" id="terms"> Aceito Termos, Disclaimer e LGPD</label>
+        <button type="submit">Cadastrar</button>
+    </form>
+    <div id="message"></div>
+</div>
+<script>
+    const API_URL = 'https://api.astromatch.app.br';
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const cpf = document.getElementById('cpf').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const name = document.getElementById('name').value;
+        const birthDate = document.getElementById('birthDate').value;
+        const birthTime = document.getElementById('birthTime').value;
+        const birthCity = document.getElementById('birthCity').value;
+        const birthState = document.getElementById('birthState').value;
+        const birthCountry = document.getElementById('birthCountry').value;
+        const terms = document.getElementById('terms').checked;
+        if (!terms) return alert('Aceite os termos');
+        try {
+            // 1. Registrar (cria usuário inativo)
+            const res = await axios.post(`${API_URL}/auth/register`, {
+                cpf, email, password,
+                termsAccepted: true, disclaimerAccepted: true, privacyAccepted: true,
+                faceDescriptor: [0,0,0]
+            });
+            const userId = res.data.userId;
+            // 2. Ativar assinatura (CPF de teste isento)
+            const paymentRes = await axios.post(`${API_URL}/payment/create-checkout`, { userId, cpf, email, name });
+            // 3. Redirecionar para a URL de pagamento (ou para /complete-profile se CPF teste)
+            window.location.href = paymentRes.data.url;
+        } catch (err) {
+            document.getElementById('message').innerText = 'Erro: ' + (err.response?.data?.error || err.message);
+        }
+    });
+    // Carregar axios da CDN (se não tiver)
+    if (!window.axios) {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js';
+        document.head.appendChild(script);
+    }
+</script>
+</body>
+</html>
